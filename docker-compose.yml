@@ -1,0 +1,39 @@
+---
+services:
+  cars-api-base:
+    image: cars-api-image
+    build:
+      context: .
+    container_name: cars-api-base
+    environment:
+      - VIRTUAL_HOST=cars-api-app.docker
+      - POSTGRES_HOST=car-postgres
+      - POSTGRES_DB=cars
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_PORT=5432
+    volumes:
+      - ${PWD}:/app
+    command: ["echo", "I only exist to be extended so I'll just exit, thanks"]
+
+  cars-api:
+    extends: cars-api-base
+    container_name: cars-api-app
+    depends_on:
+     - car-postgres
+    ports:
+      - "5000:8000"
+    command: ["uvicorn", "--reload", "--workers", "1", "--host", "0.0.0.0", "--port", "8000", "app:app"]
+
+  car-postgres:
+    container_name: car-postgres
+    image: postgres:14.2
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+      VIRTUAL_HOST: car-postgres.docker
+      POSTGRES_DB: cars
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_PORT: '5432'
+    ports:
+      - "5789:5432"
